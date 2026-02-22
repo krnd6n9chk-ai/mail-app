@@ -8,9 +8,40 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Mail Cloud">
   
-  <!-- アプリアイコン設定 (Base64で直接埋め込み) -->
-  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iI2VhNTgwYyIvPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjMyIiBkPSJNMTEyIDE2MGwxNDQgMTEyIDE0NC0xMTIiLz48cmVjdCB4PSI5NiIgeT0iMTQ0IiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIyNCIgcng9IjI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIzMiIvPjwvc3ZnPg==">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iI2VhNTgwYyIvPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjMyIiBkPSJNMTEyIDE2MGwxNDQgMTEyIDE0NC0xMTIiLz48cmVjdCB4PSI5NiIgeT0iMTQ0IiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIyNCIgcng9IjI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIzMiIvPjwvc3ZnPg==">
+  <!-- iOS用アイコン自動生成スクリプト -->
+  <script>
+    (function(){
+      var c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      var ctx = c.getContext('2d');
+      // 背景をオレンジに
+      ctx.fillStyle = '#ea580c';
+      ctx.fillRect(0,0,256,256);
+      // 白いメールの線を描画
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 16;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeRect(48, 72, 160, 112);
+      ctx.beginPath();
+      ctx.moveTo(48, 72);
+      ctx.lineTo(128, 136);
+      ctx.lineTo(208, 72);
+      ctx.stroke();
+      
+      // 生成した画像をPNGデータにしてapple-touch-iconとしてHeadに注入
+      var link = document.createElement('link');
+      link.rel = 'apple-touch-icon';
+      link.href = c.toDataURL('image/png');
+      document.head.appendChild(link);
+      
+      var icon = document.createElement('link');
+      icon.rel = 'icon';
+      icon.type = 'image/png';
+      icon.href = c.toDataURL('image/png');
+      document.head.appendChild(icon);
+    })();
+  </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -79,6 +110,316 @@
     ];
 
     const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap(group => group.items);
+
+    const INITIAL_TEMPLATES = [
+      {
+        id: 1,
+        title: '資料請求へのお礼（即レス用）',
+        category: 'initial',
+        subject: '【資料送付のご案内】［自社名］ 担当の［担当者名］です',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］でございます。
+
+この度は、弊社サービスの資料をご請求いただき、
+誠にありがとうございます。
+
+早速ではございますが、資料（PDF）をお送りいたします。
+添付ファイルをご確認いただけますでしょうか。
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+■添付資料
+・会社概要.pdf
+・サービス紹介資料.pdf
+・導入事例集.pdf
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+
+貴社の課題解決の一助となれば幸いです。
+
+ご不明点や、「まずは話を聞いてみたい」というご要望がございましたら、
+本メールへの返信、または下記電話番号までお気軽にご連絡ください。
+
+引き続き何卒よろしくお願い申し上げます.`
+      },
+      {
+        id: 2,
+        title: '日程調整の打診（初回）',
+        category: 'initial',
+        subject: '【お打ち合わせのご相談】［自社名］',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］でございます。
+
+先ほどは資料をご覧いただきありがとうございました。
+もしよろしければ、貴社の現状や課題感に合わせて
+より具体的な事例やデモンストレーションをご紹介できればと考えております。
+
+つきましては、20分～30分ほどオンラインにて
+情報交換のお時間をいただけないでしょうか。
+
+以下の日程でご都合はいかがでしょうか。
+
+■候補日時
+・〇月〇日（曜） 10:00～18:00
+・〇月〇日（曜） 13:00～16:00
+・〇月〇日（曜） 10:00～12:00
+
+上記以外をご希望の場合は、ご都合の良い日時を
+いくつかいただけますと幸いです。
+
+ご検討のほど、よろしくお願い申し上げます.`
+      },
+      {
+        id: 3,
+        title: '検討状況の確認（1週間後）',
+        category: 'followup',
+        subject: '先日お送りした資料につきまして【［自社名］】',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］です。
+
+先日お送りいたしました資料はご覧いただけましたでしょうか。
+
+もしご不明な点や、
+「もっとここを詳しく知りたい」といった箇所がございましたら、
+担当の私までお気軽にお申し付けください。
+
+また、同業他社様での導入事例などをまとめた
+追加資料もご用意が可能でございます。
+
+ご興味がございましたら、ぜひ一度情報提供の機会をいただけますと幸いです。
+
+お手すきの際にご返信いただけますと幸いです。
+よろしくお願いいたします.`
+      },
+      {
+        id: 4,
+        title: '音信不通時の再連絡（クッション）',
+        category: 'followup',
+        subject: '【再送】ご検討状況はいかがでしょうか',
+        body: `［お客様名］様
+
+いつも大変お世話になっております。
+［自社名］の［担当者名］です。
+
+度々のご連絡となり大変恐縮でございます。
+
+以前ご提案させていただきました件につきまして、
+その後、ご検討状況はいかがでしょうか。
+
+ご多忙中とは存じますが、
+現状について一言だけでもご教示いただけますと幸いです。
+（「時期尚早」「他社に決定」等でも構いません）
+
+何卒よろしくお願い申し上げます.`
+      },
+      {
+        id: 5,
+        title: '半年後の掘り起こし（新機能・事例）',
+        category: 'reengage',
+        subject: '【新機能のご案内】課題解決に役立つ機能が追加されました',
+        body: `［お客様名］様
+
+大変ご無沙汰しております。
+［自社名］の［担当者名］でございます。
+
+以前は弊社サービスをご検討いただき、誠にありがとうございました。
+
+この度、以前懸念されていた点を解消できる
+「新機能」がリリースされましたので、
+改めてご案内させていただきたくご連絡いたしました。
+
+▼新機能のお知らせ
+（URLや詳細を記載）
+
+現在の状況に合わせて、
+改めてお役に立てるご提案ができるかと存じます。
+
+もしよろしければ、最新の資料をお送りするか、
+一度近況をお伺いできればと考えております。
+
+ご興味をお持ちいただけましたら、
+本メールへご返信いただけますと幸いです。
+
+季節の変わり目ですので、ご自愛くださいませ.`
+      },
+      {
+        id: 8,
+        title: '机上査定報告書の送付（Eメール）',
+        category: 'satei_initial',
+        subject: '【机上査定報告書のご送付】［自社名］ 担当：［担当者名］',
+        body: `［お客様名］ 様
+
+突然のご連絡にて失礼いたします。
+［自社名］の［担当者名］と申します。
+
+この度は、不動産一括査定サイト「［媒体名］」を通じて、 
+ご所有不動産の査定をご依頼いただき、誠にありがとうございます。
+
+【査定物件】 ［物件のエリア・種別］
+
+［媒体名］運営のオペレーター様を通じて、 
+「［お客様のご事情1］」
+「［お客様のご事情2］」 
+というご事情を承りました。
+
+机上査定にはなりますが、下記3点の資料データを添付いたしますので、
+ご査収いただきますようお願いいたします。
+
+〇査定報告書
+〇調査レポートおよび調査資料
+〇成約事例／近隣販売在庫
+
+お手数をおかけいたしますが、メールをご確認できた場合、
+その旨のご返信をいただきたく存じます。
+データ添付ですと、迷惑メールに入ってしまっている場合があります。
+
+何卒、よろしくお願いいたします.`
+      },
+      {
+        id: 9,
+        title: 'その後の状況確認／再査定のご案内',
+        category: 'satei_followup',
+        subject: 'ご所有不動産の査定につきまして【［自社名］】',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］です。
+
+先日お送りした査定結果について、その後ご検討状況はいかがでしょうか？
+
+もし状況などに変化がございましたら、現在の最新の相場にて改めて査定し直すことも可能でございます。
+ご不明点やご相談などがございましたら、本メールへご返信いただくか、下記までお気軽にご連絡ください。
+
+引き続きよろしくお願い申し上げます.`
+      },
+      {
+        id: 10,
+        title: '査定書（郵送）の到着確認',
+        category: 'satei_followup',
+        subject: '査定書のご郵送につきまして【［自社名］】',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］です。
+
+先日ご郵送にてお送りいたしました査定書ですが、無事にお手元に届いておりますでしょうか？
+
+万が一、まだ届いていないようであれば再送いたしますので、大変お手数ですがその旨をご返信いただけますと助かります。
+
+内容についてのご不明点などもお気軽にお問い合わせください。
+何卒よろしくお願い申し上げます.`
+      },
+      {
+        id: 11,
+        title: '査定書（メール）の到着確認',
+        category: 'satei_followup',
+        subject: '査定書のご送付につきまして【［自社名］】',
+        body: `［お客様名］様
+
+お世話になっております。
+［自社名］の［担当者名］です。
+
+先日メールにてお送りいたしました査定書ですが、無事にご確認いただけましたでしょうか？
+
+データ添付のため、稀に迷惑メールフォルダに入ってしまっている可能性もございます。
+もし届いていないようであれば再送いたしますので、大変お手数ですがその旨をご返信いただけますと助かります。
+
+何卒よろしくお願い申し上げます.`
+      },
+      {
+        id: 6,
+        title: '【SMS用】所在地不明・電話不通時（携帯から架電）',
+        category: 'satei_initial_sms',
+        subject: '（SMS用のため件名不要）',
+        body: `【［媒体名］：物件査定の件】
+
+［お客様名］様
+
+［自社名］の［担当者名］です。
+
+先ほど、携帯番号［携帯電話番号］よりお電話差し上げました。
+お仕事中でしたでしょうか、失礼いたしました。
+
+［物件のエリア・種別］に関しまして、正確な所在地などの査定に必要なご情報が不足しておりましたので、ご確認させていただきたく存じます。
+
+お手すきの際に、こちらの携帯（またはSMS）へ折り返しいただけますと幸いです。
+
+お電話でのご対応が難しい場合は、その旨をご返信くださいませ。
+
+担当:［担当者名］(［携帯電話番号］)`
+      },
+      {
+        id: 15,
+        title: '【SMS用】所在地不明・電話不通時（事務所から架電）',
+        category: 'satei_initial_sms',
+        subject: '（SMS用のため件名不要）',
+        body: `【［媒体名］：物件査定の件】
+
+［お客様名］様
+
+［自社名］の［担当者名］です。
+
+先ほど、事務所（［事務所電話番号］）よりお電話差し上げました。
+お仕事中でしたでしょうか、失礼いたしました。
+
+［物件のエリア・種別］に関しまして、正確な所在地などの査定に必要なご情報が不足しておりましたので、ご確認させていただきたく存じます。
+
+お手すきの際に、こちらの番号（またはSMS）へ折り返しいただけますと幸いです。
+
+お電話でのご対応が難しい場合は、その旨をご返信くださいませ。
+
+担当:［担当者名］(［事務所電話番号］)`
+      },
+      {
+        id: 12,
+        title: '【SMS用】その後の状況確認／再査定のご案内',
+        category: 'satei_followup_sms',
+        subject: '（SMS用のため件名不要）',
+        body: `【［媒体名］：物件査定の件】
+
+［お客様名］様
+
+［自社名］の［担当者名］です。
+
+先日の査定につきまして、その後いかがでしょうか？状況が変わられていれば、改めて査定し直すことも可能です。ご不明点があればいつでもご連絡ください。
+
+担当:［担当者名］(［携帯電話番号］)`
+      },
+      {
+        id: 13,
+        title: '【SMS用】査定書（郵送）の到着確認',
+        category: 'satei_followup_sms',
+        subject: '（SMS用のため件名不要）',
+        body: `【［媒体名］：物件査定の件】
+
+［お客様名］様
+
+［自社名］の［担当者名］です。
+
+先日ご郵送いたしました査定書は、無事お手元に届いておりますでしょうか？もし届いていないようであれば再送いたしますので、その旨をご返信いただけますと助かります。
+
+担当:［担当者名］(［携帯電話番号］)`
+      },
+      {
+        id: 14,
+        title: '【SMS用】査定書（メール）の到着確認',
+        category: 'satei_followup_sms',
+        subject: '（SMS用のため件名不要）',
+        body: `【［媒体名］：物件査定の件】
+
+［お客様名］様
+
+［自社名］の［担当者名］です。
+
+先日メールにて送信いたしました査定書は、無事にご確認いただけましたでしょうか？もし届いていないようであれば再送いたしますので、その旨をご返信いただけますと助かります。
+
+担当:［担当者名］(［携帯電話番号］)`
+      }
+    ];
 
     function App() {
       const [db, setDb] = useState(null);
