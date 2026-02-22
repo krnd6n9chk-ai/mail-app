@@ -15,14 +15,10 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    window.FirebaseLib = { initializeApp, getAuth, signInAnonymously, onAuthStateChanged, getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, deleteDoc };
-  </script>
+  <!-- Firebase 安定版 SDK (同期読み込みで迷子を防ぐ) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -111,7 +107,7 @@
 ご不明点や、「まずは話を聞いてみたい」というご要望がございましたら、
 本メールへの返信、または下記電話番号までお気軽にご連絡ください。
 
-引き続き何卒よろしくお願い申し上げます。`
+引き続き何卒よろしくお願い申し上げます.`
       },
       {
         id: 2,
@@ -140,7 +136,7 @@
 上記以外をご希望の場合は、ご都合の良い日時を
 いくつかいただけますと幸いです。
 
-ご検討のほど、よろしくお願い申し上げます。`
+ご検討のほど、よろしくお願い申し上げます.`
       },
       {
         id: 3,
@@ -164,7 +160,7 @@
 ご興味がございましたら、ぜひ一度情報提供の機会をいただけますと幸いです。
 
 お手すきの際にご返信いただけますと幸いです。
-よろしくお願いいたします。`
+よろしくお願いいたします.`
       },
       {
         id: 4,
@@ -185,7 +181,7 @@
 現状について一言だけでもご教示いただけますと幸いです。
 （「時期尚早」「他社に決定」等でも構いません）
 
-何卒よろしくお願い申し上げます。`
+何卒よろしくお願い申し上げます.`
       },
       {
         id: 5,
@@ -215,7 +211,7 @@
 ご興味をお持ちいただけましたら、
 本メールへご返信いただけますと幸いです。
 
-季節の変わり目ですので、ご自愛くださいませ。`
+季節の変わり目ですので、ご自愛くださいませ.`
       },
       {
         id: 8,
@@ -248,7 +244,7 @@
 その旨のご返信をいただきたく存じます。
 データ添付ですと、迷惑メールに入ってしまっている場合があります。
 
-何卒、よろしくお願いいたします。`
+何卒、よろしくお願いいたします.`
       },
       {
         id: 9,
@@ -265,7 +261,7 @@
 もし状況などに変化がございましたら、現在の最新の相場にて改めて査定し直すことも可能でございます。
 ご不明点やご相談などがございましたら、本メールへご返信いただくか、下記までお気軽にご連絡ください。
 
-引き続きよろしくお願い申し上げます。`
+引き続きよろしくお願い申し上げます.`
       },
       {
         id: 10,
@@ -282,7 +278,7 @@
 万が一、まだ届いていないようであれば再送いたしますので、大変お手数ですがその旨をご返信いただけますと助かります。
 
 内容についてのご不明点などもお気軽にお問い合わせください。
-何卒よろしくお願い申し上げます。`
+何卒よろしくお願い申し上げます.`
       },
       {
         id: 11,
@@ -299,7 +295,7 @@
 データ添付のため、稀に迷惑メールフォルダに入ってしまっている可能性もございます。
 もし届いていないようであれば再送いたしますので、大変お手数ですがその旨をご返信いただけますと助かります。
 
-何卒よろしくお願い申し上げます。`
+何卒よろしくお願い申し上げます.`
       },
       {
         id: 6,
@@ -397,7 +393,7 @@
       const [user, setUser] = useState(null);
       const [configInput, setConfigInput] = useState("");
       const [isConfigured, setIsConfigured] = useState(() => !!localStorage.getItem("firebase_config"));
-      const [appError, setAppError] = useState(null); // デバッグ用エラー表示State
+      const [appError, setAppError] = useState(null);
 
       const [templates, setTemplates] = useState([]);
       const [settings, setSettings] = useState({ mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' });
@@ -412,18 +408,24 @@
 
       const appId = "mail-template-app";
 
+      // 安定版（Compat）SDKを使用した確実な初期化処理
       useEffect(() => {
         const savedConfig = localStorage.getItem("firebase_config");
         if (savedConfig) {
           try {
             const config = JSON.parse(savedConfig);
-            const app = window.FirebaseLib.initializeApp(config);
-            const auth = window.FirebaseLib.getAuth(app);
-            const _db = window.FirebaseLib.getFirestore(app);
+            
+            // Firebaseが未初期化の場合のみ初期化を実行
+            if (!firebase.apps.length) {
+              firebase.initializeApp(config);
+            }
+            const app = firebase.app();
+            const _auth = app.auth();
+            const _db = app.firestore();
+            
             setDb(_db);
             
-            // 匿名ログイン処理とエラー捕捉
-            window.FirebaseLib.signInAnonymously(auth).catch(e => {
+            _auth.signInAnonymously().catch(e => {
                 let errorMsg = "【ログインエラー】\n" + e.message;
                 if (e.message.includes("unauthorized-domain") || e.code === "auth/unauthorized-domain") {
                     errorMsg += "\n\n💡原因: GitHub Pagesのドメインが許可されていません。\nFirebaseコンソールの「Authentication」>「設定」>「承認済みドメイン」に krnd6n9chk-ai.github.io を追加してください。";
@@ -431,37 +433,43 @@
                 setAppError(errorMsg);
             });
 
-            return window.FirebaseLib.onAuthStateChanged(auth, setUser);
+            return _auth.onAuthStateChanged((u) => {
+                setUser(u);
+            });
+            
           } catch (e) {
+            console.error("Firebase init error:", e);
             localStorage.removeItem("firebase_config");
             setIsConfigured(false);
           }
         }
       }, [isConfigured]);
 
+      // 安定版（Compat）SDKを使用した確実なデータ取得処理
       useEffect(() => {
         if (!db || !user) return;
-        const q = window.FirebaseLib.collection(db, 'artifacts', appId, 'public', 'data', 'templates');
         
-        const unsubT = window.FirebaseLib.onSnapshot(q, (s) => {
-          if (s.empty) {
+        // テンプレート取得
+        const templatesRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('templates');
+        const unsubT = templatesRef.onSnapshot((snapshot) => {
+          if (snapshot.empty) {
             INITIAL_TEMPLATES.forEach(async (t) => {
-              const ref = window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', t.id.toString());
-              await window.FirebaseLib.setDoc(ref, t).catch(e => setAppError("【保存エラー】\n" + e.message));
+              await templatesRef.doc(t.id.toString()).set(t).catch(e => setAppError("【保存エラー】\n" + e.message));
             });
           } else {
-            setTemplates(s.docs.map(d => ({id: d.id, ...d.data()})));
+            setTemplates(snapshot.docs.map(d => ({id: d.id, ...d.data()})));
           }
         }, (error) => {
           setAppError("【データベース読込エラー】\n" + error.message + "\n\n💡原因: Firestoreの「ルール」が正しくないか、データベースが作成されていません。\nルールが allow read, write: if true; になっているか再確認してください。");
         });
 
-        const sRef = window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
-        const unsubS = window.FirebaseLib.onSnapshot(sRef, d => {
-            if (d.exists()) {
-                setSettings(d.data());
+        // 設定取得
+        const sRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('global');
+        const unsubS = sRef.onSnapshot(doc => {
+            if (doc.exists) {
+                setSettings(doc.data());
             } else {
-                window.FirebaseLib.setDoc(sRef, { mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' }).catch(e => console.error(e));
+                sRef.set({ mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' }).catch(e => console.error(e));
             }
         });
 
@@ -499,21 +507,24 @@
       };
 
       const saveToCloud = async (t) => {
-        if (!db || !user) return;
+        if (!db || !user) {
+            alert("クラウドに接続できていません。再読み込みしてください。");
+            return;
+        }
         const id = t.id || crypto.randomUUID();
-        await window.FirebaseLib.setDoc(window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', id.toString()), { ...t, id }).catch(e => setAppError("保存エラー: " + e.message));
+        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('templates').doc(id.toString()).set({ ...t, id }).catch(e => setAppError("保存エラー: " + e.message));
         setEditingTemplate(null);
         showNotification("保存しました");
       };
 
       const deleteFromCloud = async (id) => {
         if (!window.confirm("削除しますか？")) return;
-        await window.FirebaseLib.deleteDoc(window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', id.toString()));
+        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('templates').doc(id.toString()).delete();
       };
 
       const updateSettings = async (s) => {
         setSettings(s);
-        if (db && user) await window.FirebaseLib.setDoc(window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global'), s);
+        if (db && user) await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('global').set(s);
       };
 
       const showNotification = (msg) => { setNotification(msg); setTimeout(() => setNotification(null), 3000); };
