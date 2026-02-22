@@ -59,6 +59,7 @@
     const Smartphone = (p) => <Icon {...p} path={<g><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></g>} />;
     const Settings = (p) => <Icon {...p} path={<g><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/><circle cx="12" cy="12" r="3"/></g>} />;
     const ChevronDown = (p) => <Icon {...p} path={<polyline points="6 9 12 15 18 9"/>} />;
+    const AlertTriangle = (p) => <Icon {...p} path={<g><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></g>} />;
 
     const CATEGORY_GROUPS = [
       { id: 'general', label: '', items: [{ id: 'all', name: 'すべて', icon: <Folder size={18} /> }] },
@@ -81,7 +82,6 @@
 
     const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap(group => group.items);
 
-    // --- 初回セットアップ用の初期テンプレート ---
     const INITIAL_TEMPLATES = [
       {
         id: 1,
@@ -397,6 +397,8 @@
       const [user, setUser] = useState(null);
       const [configInput, setConfigInput] = useState("");
       const [isConfigured, setIsConfigured] = useState(() => !!localStorage.getItem("firebase_config"));
+      const [appError, setAppError] = useState(null); // デバッグ用エラー表示State
+
       const [templates, setTemplates] = useState([]);
       const [settings, setSettings] = useState({ mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' });
       const [activeCategory, setActiveCategory] = useState('satei_initial');
@@ -419,7 +421,16 @@
             const auth = window.FirebaseLib.getAuth(app);
             const _db = window.FirebaseLib.getFirestore(app);
             setDb(_db);
-            window.FirebaseLib.signInAnonymously(auth);
+            
+            // 匿名ログイン処理とエラー捕捉
+            window.FirebaseLib.signInAnonymously(auth).catch(e => {
+                let errorMsg = "【ログインエラー】\n" + e.message;
+                if (e.message.includes("unauthorized-domain") || e.code === "auth/unauthorized-domain") {
+                    errorMsg += "\n\n💡原因: GitHub Pagesのドメインが許可されていません。\nFirebaseコンソールの「Authentication」>「設定」>「承認済みドメイン」に krnd6n9chk-ai.github.io を追加してください。";
+                }
+                setAppError(errorMsg);
+            });
+
             return window.FirebaseLib.onAuthStateChanged(auth, setUser);
           } catch (e) {
             localStorage.removeItem("firebase_config");
@@ -433,16 +444,16 @@
         const q = window.FirebaseLib.collection(db, 'artifacts', appId, 'public', 'data', 'templates');
         
         const unsubT = window.FirebaseLib.onSnapshot(q, (s) => {
-          // --- もしクラウドのデータが空なら、初期テンプレートを自動保存する ---
           if (s.empty) {
             INITIAL_TEMPLATES.forEach(async (t) => {
               const ref = window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', t.id.toString());
-              await window.FirebaseLib.setDoc(ref, t);
+              await window.FirebaseLib.setDoc(ref, t).catch(e => setAppError("【保存エラー】\n" + e.message));
             });
           } else {
-            // クラウドから取得したデータをセット
             setTemplates(s.docs.map(d => ({id: d.id, ...d.data()})));
           }
+        }, (error) => {
+          setAppError("【データベース読込エラー】\n" + error.message + "\n\n💡原因: Firestoreの「ルール」が正しくないか、データベースが作成されていません。\nルールが allow read, write: if true; になっているか再確認してください。");
         });
 
         const sRef = window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'global');
@@ -450,8 +461,7 @@
             if (d.exists()) {
                 setSettings(d.data());
             } else {
-                // 初回は基本設定の枠組みもクラウドに作っておく
-                window.FirebaseLib.setDoc(sRef, { mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' });
+                window.FirebaseLib.setDoc(sRef, { mediaList: ['すまいステップ', 'リビンマッチ'], companyName: '', staffName: '', mobilePhone: '', officePhone: '' }).catch(e => console.error(e));
             }
         });
 
@@ -460,7 +470,6 @@
 
       const handleConfigSubmit = () => {
         try {
-          // 入力された文字列から必要な情報（キーと値）を強制的に抽出する処理
           let apiKey = configInput.match(/apiKey[s"':]+([^"',s}]+)/i);
           let authDomain = configInput.match(/authDomain[s"':]+([^"',s}]+)/i);
           let projectId = configInput.match(/projectId[s"':]+([^"',s}]+)/i);
@@ -492,7 +501,7 @@
       const saveToCloud = async (t) => {
         if (!db || !user) return;
         const id = t.id || crypto.randomUUID();
-        await window.FirebaseLib.setDoc(window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', id.toString()), { ...t, id });
+        await window.FirebaseLib.setDoc(window.FirebaseLib.doc(db, 'artifacts', appId, 'public', 'data', 'templates', id.toString()), { ...t, id }).catch(e => setAppError("保存エラー: " + e.message));
         setEditingTemplate(null);
         showNotification("保存しました");
       };
@@ -547,6 +556,21 @@
 
       return (
         <div className="min-h-[100dvh] bg-gray-50 flex flex-col md:flex-row relative">
+          {/* デバッグ用エラー表示モーダル */}
+          {appError && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className="bg-white rounded-xl shadow-2xl p-6 max-w-lg w-full">
+                <h3 className="text-red-600 font-bold text-xl mb-4 flex items-center gap-2"><AlertTriangle size={24} /> 通信エラーが発生しました</h3>
+                <pre className="bg-red-50 text-red-800 p-4 rounded text-sm whitespace-pre-wrap font-mono mb-4 border border-red-200">{appError}</pre>
+                <p className="text-sm text-gray-600 mb-6 font-medium">設定を確認後、画面を再読み込みしてください。</p>
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => { localStorage.removeItem("firebase_config"); window.location.reload(); }} className="px-4 py-2 border border-gray-300 rounded text-gray-700 font-bold hover:bg-gray-100">設定コードからやり直す</button>
+                  <button onClick={() => setAppError(null)} className="px-5 py-2 bg-slate-800 text-white rounded font-bold hover:bg-slate-700">閉じる</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {isMobileMenuOpen && <div className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />}
           
           <aside className={`fixed pt-safe inset-y-0 left-0 z-50 w-72 bg-slate-800 text-white flex flex-col transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
