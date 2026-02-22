@@ -415,7 +415,6 @@
           try {
             const config = JSON.parse(savedConfig);
             
-            // Firebaseが未初期化の場合のみ初期化を実行
             if (!firebase.apps.length) {
               firebase.initializeApp(config);
             }
@@ -445,11 +444,10 @@
         }
       }, [isConfigured]);
 
-      // 安定版（Compat）SDKを使用した確実なデータ取得処理
+      // データ取得処理
       useEffect(() => {
         if (!db || !user) return;
         
-        // テンプレート取得
         const templatesRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('templates');
         const unsubT = templatesRef.onSnapshot((snapshot) => {
           if (snapshot.empty) {
@@ -463,7 +461,6 @@
           setAppError("【データベース読込エラー】\n" + error.message + "\n\n💡原因: Firestoreの「ルール」が正しくないか、データベースが作成されていません。\nルールが allow read, write: if true; になっているか再確認してください。");
         });
 
-        // 設定取得
         const sRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('settings').doc('global');
         const unsubS = sRef.onSnapshot(doc => {
             if (doc.exists) {
@@ -478,15 +475,21 @@
 
       const handleConfigSubmit = () => {
         try {
-          let apiKey = configInput.match(/apiKey[s"':]+([^"',s}]+)/i);
-          let authDomain = configInput.match(/authDomain[s"':]+([^"',s}]+)/i);
-          let projectId = configInput.match(/projectId[s"':]+([^"',s}]+)/i);
-          let storageBucket = configInput.match(/storageBucket[s"':]+([^"',s}]+)/i);
-          let messagingSenderId = configInput.match(/messagingSenderId[s"':]+([^"',s}]+)/i);
-          let appIdValue = configInput.match(/appId[s"':]+([^"',s}]+)/i);
+          // どんな形式でコピペされても強力に抽出する正規表現
+          let apiKey = configInput.match(/apiKey["'\s:=]+([^"',\s}]+)/i);
+          let authDomain = configInput.match(/authDomain["'\s:=]+([^"',\s}]+)/i);
+          let projectId = configInput.match(/projectId["'\s:=]+([^"',\s}]+)/i);
+          let storageBucket = configInput.match(/storageBucket["'\s:=]+([^"',\s}]+)/i);
+          let messagingSenderId = configInput.match(/messagingSenderId["'\s:=]+([^"',\s}]+)/i);
+          let appIdValue = configInput.match(/appId["'\s:=]+([^"',\s}]+)/i);
 
           if (!apiKey || !projectId || !appIdValue) {
-            throw new Error("必要な項目が見つかりません。");
+            throw new Error("必要な項目（apiKey, projectId, appId）が見つかりません。全体がコピーされているか確認してください。");
+          }
+
+          // APIキーが正しい形式か（AIza...で始まっているか）をチェック
+          if (!apiKey[1].startsWith("AIza")) {
+            throw new Error("抽出されたAPIキー（" + apiKey[1] + "）の形式が間違っています。'AIza' から始まる文字列が含まれているか確認してください。");
           }
 
           const extractedConfig = {
@@ -501,7 +504,7 @@
           localStorage.setItem("firebase_config", JSON.stringify(extractedConfig));
           setIsConfigured(true);
         } catch (e) {
-          alert("設定値の読み取りに失敗しました。コピーした内容に不足がある可能性があります。");
+          alert("【設定値の読み取りエラー】\n" + e.message + "\n\nコピーした内容が不足しているか、不要な文字が含まれている可能性があります。\n「const firebaseConfig = { ... };」の塊をすべてコピーして貼り付けてみてください。");
           console.error(e);
         }
       };
@@ -552,10 +555,14 @@
           <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
             <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl shadow-2xl">
               <h2 className="text-2xl font-bold mb-4">Firebaseの設定</h2>
-              <p className="text-slate-400 text-sm mb-6">Firebase Consoleでコピーした構成コードを貼り付けてください。形式が多少崩れていても自動で読み取ります。</p>
+              <p className="text-slate-400 text-sm mb-6">Firebase Consoleで表示される <strong className="text-orange-400">const firebaseConfig = &#123; ... &#125;;</strong> のコードの塊を、すべてコピーして貼り付けてください。</p>
               <textarea 
                 className="w-full h-48 p-4 bg-slate-900 border border-slate-700 rounded-lg font-mono text-xs mb-4 focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder="apiKey: 'AIzaSy...',\nauthDomain: '...',\n..."
+                placeholder="const firebaseConfig = {
+  apiKey: 'AIzaSy...',
+  authDomain: '...',
+  ...
+};"
                 value={configInput}
                 onChange={e => setConfigInput(e.target.value)}
               />
